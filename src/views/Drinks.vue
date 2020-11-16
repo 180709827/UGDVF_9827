@@ -1,21 +1,33 @@
 <template>
     <v-data-table
         :headers="headers"
-        :items="desserts"
-        sort-by="calories"
+        :items="beverage"
+        sort-by="name"
         class="elevation-1"
+        :search="search" 
+        pagination.sync="pagination"
     >
         <template v-slot:top>
             <v-toolbar
                 flat
             >
-                <v-toolbar-title>F00D TABLE</v-toolbar-title>
+                <v-toolbar-title>DRINK TABLE</v-toolbar-title>
+                
+                <v-spacer></v-spacer>
                 <v-divider
                     class="mx-4"
                     inset
                     vertical
                 ></v-divider>
                 <v-spacer></v-spacer>
+                <v-text-field
+                v-model="search"
+                append-icon="mdi-magnify"
+                label="search"
+                single-line
+                hide-details
+                class="mr-4"
+                ></v-text-field>
                 <v-dialog
                     v-model="dialog"
                     max-width="500px"
@@ -46,7 +58,28 @@
                                 >
                                     <v-text-field
                                         v-model="editedItem.name"
-                                        label="Dessert name"
+                                        label="Drink name"
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col
+                                    cols="12"
+                                    sm="6"
+                                    md="4"
+                                >
+                                    <v-select
+                                    :items="['Ice','Hot']"
+                                    label="Ice / Hot"
+                                    v-model="editedItem.icehot"
+                                    ></v-select>
+                                </v-col>
+                                <v-col
+                                    cols="12"
+                                    sm="6"
+                                    md="4"
+                                >
+                                    <v-text-field
+                                        v-model="editedItem.sugar"
+                                        label="Sugar (g)"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col
@@ -55,8 +88,8 @@
                                     md="4"
                                 >
                                     <v-text-field
-                                        v-model="editedItem.calories"
-                                        label="Calories"
+                                        v-model="editedItem.water"
+                                        label="Water (g)"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col
@@ -65,28 +98,8 @@
                                     md="4"
                                 >
                                     <v-text-field
-                                        v-model="editedItem.fat"
-                                        label="Fat (g)"
-                                    ></v-text-field>
-                                </v-col>
-                                <v-col
-                                    cols="12"
-                                    sm="6"
-                                    md="4"
-                                >
-                                    <v-text-field
-                                        v-model="editedItem.carbs"
-                                        label="Carbs (g)"
-                                    ></v-text-field>
-                                </v-col>
-                                <v-col
-                                    cols="12"
-                                    sm="6"
-                                    md="4"
-                                >
-                                    <v-text-field
-                                        v-model="editedItem.protein"
-                                        label="Protein (g)"
+                                        v-model="editedItem.price"
+                                        label="Price (g)"
                                     ></v-text-field>
                                 </v-col>
                             </v-row>
@@ -146,45 +159,47 @@
 <script>
 
     //tambahkan ini untuk import database reference
-    import { dessRef } from '../firebase'
+    import { bevRef } from '../firebase'
+
     export default {
         data: () => ({
             dialog: false,
+            search:null,
             dialogDelete: false,
             headers: [
                 {
-                    text: 'Dessert (100g serving)',
+                    text: 'Beverages (100g serving)',
                     align: 'start',
                     sortable: false,
                     value: 'name',
                 },
-                { text: 'Calories', value: 'calories' },
-                { text: 'Fat (g)', value: 'fat' },
-                { text: 'Carbs (g)', value: 'carbs' },
-                { text: 'Protein (g)', value: 'protein' },
+                { text: 'Ice / Hot', value: 'icehot' },
+                { text: 'Sugar (g)', value: 'sugar' },
+                { text: 'Water (g)', value: 'water' },
+                { text: 'Price (Rp)', value: 'price' },
                 { text: 'Actions', value: 'actions', sortable: false },
             ],
-            desserts: [],
+            beverage: [],
             editedIndex: -1,
             editedItem: {
                 name: '',
-                calories: 0,
-                fat: 0,
-                carbs: 0,
-                protein: 0,
+                icehot: 0,
+                sugar: 0,
+                water: 0,
+                price: 0,
             },
             defaultItem: {
                 name: '',
-                calories: 0,
-                fat: 0,
-                carbs: 0,
-                protein: 0,
+                icehot: 0,
+                sugar: 0,
+                water: 0,
+                price: 0,
             },
         }),
 
         //tambahkan attribute firebase disini
         firebase: {
-            desserts: dessRef,
+            beverage: bevRef,
         },
 
         computed: {
@@ -218,17 +233,16 @@
 
             deleteItemConfirm () {
                 
-                //tambahkan ini untuk delete data
-                dessRef
-                    .child(this.editedIndex)
-                    .remove()
-                    .then(()=>{
-                        alert('Berhasil Hapus Data !')
-                    })
-                    .catch((err)=>[
-                        alert("Gagal Hapus Data: ",err)
-                    ])
-                    
+                bevRef
+                .child(this.editedIndex)
+                .remove()
+                .then(()=> {
+                    alert("Berhasil delete data");
+                })
+                .catch((err) => [
+                    alert('Gagal delete data',err)
+                ])
+
                 this.closeDelete()
             },
 
@@ -250,30 +264,26 @@
 
             save () {
                 if (this.editedIndex != -1) {
-                    
-                    //tambahkan ini untuk edit data
-                    dessRef
-                        .child(this.editedIndex)
-                        .set(this.editedItem)
-                        .then(()=>{
-                            alert('Berhasil Edit Data !')
-                        })
-                        .catch((err)=>[
-                            alert("Gagal Edit Data: ",err)
-                        ])
+
+                    bevRef
+                    .child(this.editedIndex)
+                    .set(this.editedItem)
+                    .then(()=>{
+                        alert("Berhasil edit data !")
+                    })
+                    .catch((err) => [
+                        alert("Gagal edit data", err)
+                    ])
 
                 } else {
-
-                    //tambahkan code ini untuk create data ke db
-                    dessRef
-                        .push(this.editedItem)
-                        .then(()=>{
-                            alert('Berhasil Tambah Data !')
-                        })
-                        .catch((err)=>[
-                            alert("Gagal Tambah Data: ",err)
-                        ])
-                    
+                    bevRef
+                    .push(this.editedItem) 
+                    .then(() => {
+                        alert("Berhasil tambah data !")
+                    }) 
+                    .catch((err) => [
+                        alert("Gagal tambah data",err)
+                    ])                  
                 }
                 this.close()
             },

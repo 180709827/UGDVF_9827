@@ -11,6 +11,7 @@ const routes = [
       template: "",
       created: function() {
           window.location.href = "/food";
+          window.location.href = "/drink";
       }
     })
   },
@@ -21,8 +22,8 @@ const routes = [
   },
   {
     path: '/drink',
-    name: 'Drink',
-    component: null
+    name: 'Drinks',
+    component: () => import( '../views/Drinks.vue')
   }
 ]
 
